@@ -2,7 +2,7 @@ Herzlich Willkommen bei dem Repository Extracta!
 
 ---
 
-**Extrata** ist ein leichtgewichtiges Python-Tool, das Lottozahlen und statistische Auswertungen direkt von der offiziellen Website [`lotto.de`](https://www.lotto.de) extrahiert. Es speichert aktuelle Ziehungen und deren Häufigkeiten für eigene Auswertungen – lokal, offline und in verschiedenen Formaten.
+„Extrata“ ist ein Werkzeug zur lokalen Datensammlung ohne kommerzielle APIs. Es wurde ursprünglich für die Auswertung von Lottozahlen entwickelt, kann aber an beliebige HTML-basierte Informationsquellen angepasst werden. Ziel ist die sichere, strukturierte und erweiterbare lokale Bereitstellung von Daten.
 
 ---
 
