@@ -1,0 +1,15 @@
+{
+  // Definiert den Pfad zur Python-Installation
+  // Hier: verweist auf die portable Python-Version auf deinem USB-Stick (Ordner: E:\Python)
+  "python.defaultInterpreterPath": "E:/Python/python.exe",
+
+  // Setzt die Standard-Terminalumgebung auf die Windows-Eingabeaufforderung (cmd)
+  // Dadurch startet z. B. das Terminal in VS Code immer mit CMD statt PowerShell
+  "terminal.integrated.defaultProfile.windows": "Command Prompt",
+
+  // Fügt eine Umgebungsvariable im Terminal hinzu
+  // PYTHONPATH hilft dabei, eigene Module in E:/Python zu erkennen
+  "terminal.integrated.env.windows": {
+    "PYTHONPATH": "E:/Python/"
+  }
+}

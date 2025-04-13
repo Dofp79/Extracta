@@ -1,0 +1,33 @@
+extracta/
+├── model/         # Datenmodell: Lottoziehungen, Speicherung, Prüfung
+│   └── lotto_model.py
+├── view/          # Ausgabe-Formate (z. B. JSON, Excel, API-Response)
+│   └── lotto_view.py
+├── controller/    # Logik: orchestriert scraping, Speicherung, API-Aufrufe
+│   └── lotto_controller.py
+├── api/           # REST API (FastAPI) als View-Interface
+│   └── main.py
+├── core/          # Basislogik: Scraper, Downloader
+│   ├── lotto_scraper.py
+│   └── daten_check.py
+├── extracta_runner.py
+└── requirements.txt
+
+
+Vorteile in unserem Kontext:
+
+- Saubere Trennung:
+
+Änderungen am Speicherort (Excel → SQL) → nur model/
+
+Neue Ausgabeformate (z. B. CSV, REST, HTML) → nur view/
+
+Neue Datenquelle (andere Lotterie) → nur controller/ + core/
+
+- Testbarkeit:
+
+Modelle & Views leicht testbar ohne API oder echte Daten
+
+- Erweiterbarkeit:
+
+Später Web-GUI, CLI oder Zeitplaner → nur neue Views/Controller

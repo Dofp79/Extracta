@@ -1,0 +1,10 @@
+Projektstruktur auf USB:
+
+E:\
+├── VSCode\                  # VS Code portable
+├── Python\                  # Embeddable Python
+├── Extracta\                # Unser Projekt
+│   ├── model\
+│   ├── core\
+│   ├── api\
+│   └── extracta_runner.py
