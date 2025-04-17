@@ -65,23 +65,32 @@ class LottoHistorieScraper:
         self.driver.save_screenshot(f"screenshot_{jahr}.png")
 
         try:
-            jahr_selector = "div.Select--year select"
-            self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, jahr_selector)))
-            jahr_dropdown = self.driver.find_element(By.CSS_SELECTOR, jahr_selector)
+    # Alle Dropdowns durchgehen
+    selects = self.driver.find_elements(By.TAG_NAME, "select")
+    gefunden = False
 
-            for option in jahr_dropdown.find_elements(By.TAG_NAME, "option"):
-                if option.text.strip() == str(jahr):
-                    option.click()
-                    break
-            else:
-                raise ValueError(f"\u26a0\ufe0f Jahr {jahr} nicht im Dropdown gefunden.")
+    for select in selects:
+        options = select.find_elements(By.TAG_NAME, "option")
+        for option in options:
+            if option.text.strip() == str(jahr):
+                # Trigger Auswahl via JavaScript
+                self.driver.execute_script("""
+                    arguments[0].value = arguments[1];
+                    arguments[0].dispatchEvent(new Event('change', { bubbles: true }));
+                """, select, option.get_attribute("value"))
+                gefunden = True
+                break
+        if gefunden:
+            break
 
-            time.sleep(3)
+    if not gefunden:
+        raise ValueError(f"⚠️ Jahr {jahr} nicht im Dropdown gefunden.")
 
-        except Exception as e:
-            print(f"❌ Fehler beim Laden des Jahres {jahr}: {e}")
-            self.driver.save_screenshot(f"screenshot_error_{jahr}.png")
-            raise
+    time.sleep(3)  # Warte auf Content-Reload
+except Exception as e:
+    print(f"Fehler beim Laden des Jahres {jahr}: {e}")
+    self.driver.save_screenshot(f"screenshot_error_{jahr}.png")
+    raise
 
     def extrahiere_ziehungen(self):
         ziehungen = []
@@ -126,27 +135,30 @@ def lade_jahr(self, jahr: int):
     self.driver.save_screenshot(f"screenshot_{jahr}.png")
 
     try:
-        # Finde alle <select>-Felder und suche das mit Jahresoptionen
-        dropdowns = self.driver.find_elements(By.TAG_NAME, "select")
-        jahr_dropdown = None
+        # Richtige Einrückung hier 
+        selects = self.driver.find_elements(By.TAG_NAME, "select")
+        gefunden = False
 
-        for select in dropdowns:
+        for select in selects:
             options = select.find_elements(By.TAG_NAME, "option")
             for option in options:
                 if option.text.strip() == str(jahr):
-                    jahr_dropdown = select
-                    option.click()
+                    self.driver.execute_script("""
+                        arguments[0].value = arguments[1];
+                        arguments[0].dispatchEvent(new Event('change', { bubbles: true }));
+                    """, select, option.get_attribute("value"))
+                    gefunden = True
                     break
-            if jahr_dropdown:
+            if gefunden:
                 break
 
-        if not jahr_dropdown:
+        if not gefunden:
             raise ValueError(f"⚠️ Jahr {jahr} nicht im Dropdown gefunden.")
 
         time.sleep(3)
 
     except Exception as e:
-        print(f"❌ Fehler beim Laden des Jahres {jahr}: {e}")
+        print(f"Fehler beim Laden des Jahres {jahr}: {e}")
         self.driver.save_screenshot(f"screenshot_error_{jahr}.png")
         raise
 
@@ -171,22 +183,23 @@ def extrahiere_ziehungen(self):
 
 def lade_jahr(self, jahr: int):
     self.driver.get(BASE_URL)
-    time.sleep(4)  # Warte auf Basis-Rendering
+    time.sleep(5)  # Längeres Warten auf JS-Content
 
-    self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    time.sleep(2)  # Extra Wartezeit nach Scroll (wichtig für Lazy-Content)
+    self.driver.save_screenshot(f"screenshot_{jahr}.png")  # Debug-Screenshot
 
     try:
-        dropdowns = self.driver.find_elements(By.TAG_NAME, "select")
+        # Finde alle <select>-Elemente
+        selects = self.driver.find_elements(By.TAG_NAME, "select")
         jahr_dropdown = None
 
-        for select in dropdowns:
+        # Suche das passende Select mit dem gewünschten Jahr
+        for select in selects:
             options = select.find_elements(By.TAG_NAME, "option")
             for option in options:
                 if option.text.strip() == str(jahr):
                     jahr_dropdown = select
-                    option.click()
-                    print(f"[i] Jahr {jahr} ausgewählt.")
+                    self.driver.execute_script("arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('change'));", select, option.get_attribute("value"))
+                    print(f" Jahr {jahr} ausgewählt via JS.")
                     break
             if jahr_dropdown:
                 break
@@ -194,10 +207,14 @@ def lade_jahr(self, jahr: int):
         if not jahr_dropdown:
             raise ValueError(f"⚠️ Jahr {jahr} nicht im Dropdown gefunden.")
 
-        time.sleep(3)  # Warte auf Ziehungsdaten
-        self.driver.save_screenshot(f"screenshot_success_{jahr}.png")
+        time.sleep(4)  # Warten auf Reload
 
     except Exception as e:
-        print(f"❌ Fehler beim Laden des Jahres {jahr}: {e}")
+        print(f"Fehler beim Laden des Jahres {jahr}: {e}")
         self.driver.save_screenshot(f"screenshot_error_{jahr}.png")
         raise
+# Testlauf
+if __name__ == "__main__":
+    scraper = LottoHistorieScraper("chrome")
+    scraper.scrape_alle_jahre(2024, 2024)  # Nur 2024
+    scraper.beenden()
