@@ -149,3 +149,22 @@ def lade_jahr(self, jahr: int):
         print(f"❌ Fehler beim Laden des Jahres {jahr}: {e}")
         self.driver.save_screenshot(f"screenshot_error_{jahr}.png")
         raise
+
+def extrahiere_ziehungen(self):
+    ziehungen = []
+    eintraege = self.driver.find_elements(By.CSS_SELECTOR, ".WinningNumbers")
+    for eintrag in eintraege:
+        try:
+            datum_el = eintrag.find_elements(By.TAG_NAME, "h4")
+            if not datum_el:
+                continue  # Ziehung ohne Datum (z. B. noch nicht gezogen)
+            datum = datum_el[0].text.strip()
+
+            zahlen = [int(el.text.strip()) for el in eintrag.find_elements(By.CSS_SELECTOR, ".lotto-ball")[:6]]
+            superzahl_el = eintrag.find_elements(By.CSS_SELECTOR, ".superzahl")
+            superzahl = int(superzahl_el[0].text.strip()) if superzahl_el else None
+
+            ziehungen.append(LottoZiehung(datum=datum, zahlen=zahlen, superzahl=superzahl).to_dict())
+        except Exception as e:
+            print("⚠️ Fehler beim Eintrag:", e)
+    return ziehungen
