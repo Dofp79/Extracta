@@ -118,3 +118,34 @@ if __name__ == "__main__":
     scraper = LottoHistorieScraper("chrome")
     scraper.scrape_alle_jahre(2024, 2025)
     scraper.beenden()
+
+
+def lade_jahr(self, jahr: int):
+    self.driver.get(BASE_URL)
+    time.sleep(3)
+    self.driver.save_screenshot(f"screenshot_{jahr}.png")
+
+    try:
+        # Finde alle <select>-Felder und suche das mit Jahresoptionen
+        dropdowns = self.driver.find_elements(By.TAG_NAME, "select")
+        jahr_dropdown = None
+
+        for select in dropdowns:
+            options = select.find_elements(By.TAG_NAME, "option")
+            for option in options:
+                if option.text.strip() == str(jahr):
+                    jahr_dropdown = select
+                    option.click()
+                    break
+            if jahr_dropdown:
+                break
+
+        if not jahr_dropdown:
+            raise ValueError(f"⚠️ Jahr {jahr} nicht im Dropdown gefunden.")
+
+        time.sleep(3)
+
+    except Exception as e:
+        print(f"❌ Fehler beim Laden des Jahres {jahr}: {e}")
+        self.driver.save_screenshot(f"screenshot_error_{jahr}.png")
+        raise
