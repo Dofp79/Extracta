@@ -24,3 +24,10 @@ from model.lotto_model import LottoZiehung
 
 # Globale URL der LOTTO-Archivseite
 BASE_URL = "https://www.lotto.de/lotto-6aus49/lottozahlen"
+
+# Browser-Driver Konfiguration
+DRIVER_PATHS = {
+    "chrome": os.path.join("tools", "chromedriver.exe"),
+    "firefox": os.path.join("tools", "geckodriver.exe"),
+    "edge": os.path.join("tools", "msedgedriver.exe"),
+}
