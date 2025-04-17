@@ -168,3 +168,36 @@ def extrahiere_ziehungen(self):
         except Exception as e:
             print("⚠️ Fehler beim Eintrag:", e)
     return ziehungen
+
+def lade_jahr(self, jahr: int):
+    self.driver.get(BASE_URL)
+    time.sleep(4)  # Warte auf Basis-Rendering
+
+    self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    time.sleep(2)  # Extra Wartezeit nach Scroll (wichtig für Lazy-Content)
+
+    try:
+        dropdowns = self.driver.find_elements(By.TAG_NAME, "select")
+        jahr_dropdown = None
+
+        for select in dropdowns:
+            options = select.find_elements(By.TAG_NAME, "option")
+            for option in options:
+                if option.text.strip() == str(jahr):
+                    jahr_dropdown = select
+                    option.click()
+                    print(f"[i] Jahr {jahr} ausgewählt.")
+                    break
+            if jahr_dropdown:
+                break
+
+        if not jahr_dropdown:
+            raise ValueError(f"⚠️ Jahr {jahr} nicht im Dropdown gefunden.")
+
+        time.sleep(3)  # Warte auf Ziehungsdaten
+        self.driver.save_screenshot(f"screenshot_success_{jahr}.png")
+
+    except Exception as e:
+        print(f"❌ Fehler beim Laden des Jahres {jahr}: {e}")
+        self.driver.save_screenshot(f"screenshot_error_{jahr}.png")
+        raise
