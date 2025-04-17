@@ -61,13 +61,27 @@ class LottoHistorieScraper:
 
     def lade_jahr(self, jahr: int):
         self.driver.get(BASE_URL)
-        self.wait.until(EC.presence_of_element_located((By.NAME, "year")))
-        jahr_dropdown = self.driver.find_element(By.NAME, "year")
-        for option in jahr_dropdown.find_elements(By.TAG_NAME, "option"):
-            if option.text.strip() == str(jahr):
-                option.click()
-                break
-        time.sleep(2)  # Warten auf Neuladung der Seite
+        time.sleep(3)
+        self.driver.save_screenshot(f"screenshot_{jahr}.png")
+
+        try:
+            jahr_selector = "div.Select--year select"
+            self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, jahr_selector)))
+            jahr_dropdown = self.driver.find_element(By.CSS_SELECTOR, jahr_selector)
+
+            for option in jahr_dropdown.find_elements(By.TAG_NAME, "option"):
+                if option.text.strip() == str(jahr):
+                    option.click()
+                    break
+            else:
+                raise ValueError(f"\u26a0\ufe0f Jahr {jahr} nicht im Dropdown gefunden.")
+
+            time.sleep(3)
+
+        except Exception as e:
+            print(f"❌ Fehler beim Laden des Jahres {jahr}: {e}")
+            self.driver.save_screenshot(f"screenshot_error_{jahr}.png")
+            raise
 
     def extrahiere_ziehungen(self):
         ziehungen = []
@@ -79,14 +93,14 @@ class LottoHistorieScraper:
                 superzahl = int(eintrag.find_element(By.CSS_SELECTOR, ".superzahl").text.strip())
                 ziehungen.append(LottoZiehung(datum=datum, zahlen=zahlen, superzahl=superzahl).to_dict())
             except Exception as e:
-                print("⚠️ Fehler beim Eintrag:", e)
+                print("\u26a0\ufe0f Fehler beim Eintrag:", e)
         return ziehungen
 
     def speichere_jahr(self, jahr: int, ziehungen: list):
         pfad = os.path.join(self.speicherpfad, f"ziehungen_{jahr}.json")
         with open(pfad, "w", encoding="utf-8") as f:
             json.dump(ziehungen, f, indent=2, ensure_ascii=False)
-        print(f"[✓] Gespeichert: {pfad}")
+        print(f"[\u2713] Gespeichert: {pfad}")
 
     def scrape_alle_jahre(self, start=1955, ende=2025):
         for jahr in range(start, ende + 1):
@@ -102,6 +116,5 @@ class LottoHistorieScraper:
 # Testlauf
 if __name__ == "__main__":
     scraper = LottoHistorieScraper("chrome")
-    scraper.scrape_alle_jahre(2024, 2025)  # Nur Testzeitraum
+    scraper.scrape_alle_jahre(2024, 2025)
     scraper.beenden()
-
