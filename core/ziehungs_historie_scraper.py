@@ -1,7 +1,7 @@
 """
 Modul: core/ziehungs_historie_scraper.py
 Ziel:
-- Vollständiger Abruf aller Lottoziehungen von 1955–2025
+- Vollständiger Abruf aller Lottoziehungen von 1955 bis heute
 - Interagiert mit dem Jahr-Dropdown auf lotto.de
 - Extrahiert Datum, Zahlen, Superzahl je Ziehung
 - Speichert jedes Jahr als JSON-Datei
@@ -11,8 +11,7 @@ import os
 import time
 import json
 import sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
+from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -20,12 +19,14 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.edge.service import Service as EdgeService
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from model.lotto_model import LottoZiehung
 
-# URL der Archivseite
+# Archivseite
 BASE_URL = "https://www.lotto.de/lotto-6aus49/lottozahlen"
 
-# Treiberpfade
+# Treiber
 DRIVER_PATHS = {
     "chrome": os.path.join("tools", "chromedriver.exe"),
     "firefox": os.path.join("tools", "geckodriver.exe"),
@@ -36,7 +37,7 @@ class LottoHistorieScraper:
     def __init__(self, browser="chrome"):
         self.browser = browser.lower()
         self.driver = self._starte_browser()
-        self.wait = WebDriverWait(self.driver, 15)
+        self.wait = WebDriverWait(self.driver, 20)
         self.speicherpfad = os.path.join("data", "ziehungen_historie")
         os.makedirs(self.speicherpfad, exist_ok=True)
 
@@ -57,12 +58,11 @@ class LottoHistorieScraper:
             options.add_argument("--headless")
             return webdriver.Edge(service=service, options=options)
         else:
-            raise ValueError("Unterstützter Browser: chrome, firefox, edge")
+            raise ValueError("Browser muss chrome, firefox oder edge sein.")
 
     def lade_jahr(self, jahr: int):
         self.driver.get(BASE_URL)
-        time.sleep(5)  # Warte auf JavaScript-Inhalte
-
+        time.sleep(5)
         self.driver.save_screenshot(f"screenshot_{jahr}.png")
 
         try:
@@ -86,9 +86,9 @@ class LottoHistorieScraper:
             if not jahr_dropdown:
                 raise ValueError(f"⚠️ Jahr {jahr} nicht im Dropdown gefunden.")
 
-            time.sleep(5)  # Warte auf Content-Neuladen
+            time.sleep(5)
         except Exception as e:
-            print(f" Fehler beim Laden des Jahres {jahr}: {e}")
+            print(f"Fehler beim Laden des Jahres {jahr}: {e}")
             self.driver.save_screenshot(f"screenshot_error_{jahr}.png")
             raise
 
@@ -119,9 +119,10 @@ class LottoHistorieScraper:
         pfad = os.path.join(self.speicherpfad, f"ziehungen_{jahr}.json")
         with open(pfad, "w", encoding="utf-8") as f:
             json.dump(ziehungen, f, indent=2, ensure_ascii=False)
-        print(f"[✓] Gespeichert: {pfad}")
+        print(f"[✓] Gespeichert: {pfad} ({len(ziehungen)} Ziehungen)")
 
-    def scrape_alle_jahre(self, start=1955, ende=2025):
+    def scrape_alle_jahre(self, start=1955, ende=None):
+        ende = ende or datetime.today().year
         for jahr in range(start, ende + 1):
             print(f" Bearbeite Jahr {jahr} …")
             self.lade_jahr(jahr)
@@ -131,9 +132,8 @@ class LottoHistorieScraper:
     def beenden(self):
         self.driver.quit()
 
-
 # Testlauf
 if __name__ == "__main__":
     scraper = LottoHistorieScraper("chrome")
-    scraper.scrape_alle_jahre(2024, 2024)  # Nur Testlauf für ein Jahr
+    scraper.scrape_alle_jahre()  # Automatisch von 1955 bis heute
     scraper.beenden()
