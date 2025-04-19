@@ -1,3 +1,37 @@
+"""
+Modulname: lotto_alle_ziehungen_scraper.py
+Pfad:     core/lotto_alle_ziehungen_scraper.py
+Zweck:    Vollständiger & robuster Web-Scraper für alle Ziehungen des Spiels „Lotto 6 aus 49“ von 1955 bis heute.
+Website:  https://www.lotto.de/lotto-6aus49/lottozahlen
+
+Beschreibung:
+Dieses Skript automatisiert den Abruf aller historischen Lottoziehungen vom offiziellen Lotto-Portal.
+Es navigiert die Auswahlmenüs für Jahr und Ziehungsdatum dynamisch und extrahiert für jede Ziehung:
+- Datum
+- Jahr
+- 6 gezogene Lottozahlen
+- Superzahl
+
+Funktionen:
+- Navigiert durch die Jahres- und Datumsauswahl
+- Erkennt DOM-Änderungen und wartet aktiv auf neue Ziehungsdaten
+- Extrahiert vollständige Ziehungsdaten je Datum
+- Implementiert Retry-Logik bei fehlerhaften DOM-Zugriffen
+- Ignoriert leere oder fehlerhafte Dropdown-Einträge
+- Optional: sichtbarer Browser für Tests (Headless kann deaktiviert werden)
+- Exportiert Daten in Excel-Datei
+- Fehlerhafte Ziehungen werden separat protokolliert (JSON)
+
+Abhängigkeiten:
+- Selenium
+- pandas
+- openpyxl
+
+Verwendung:
+>>> (venv) PS C:\Extracta> python core/lotto_alle_ziehungen_scraper.py
+"""
+
+
 import os
 import time
 import pandas as pd
@@ -21,6 +55,7 @@ class LottoScraper:
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         self.driver = webdriver.Chrome(service=Service("tools/chromedriver.exe"), options=chrome_options)
+        self.fehlerhafte_ziehungen = []
 
     def lade_jahr_und_tag(self, jahr, tag_value):
         self.driver.get(BASE_URL)
@@ -73,7 +108,7 @@ class LottoScraper:
     def extrahiere_alle_daten(self, start=1955, ende=2025):
         daten = []
         for jahr in range(start, ende + 1):
-            print(f" Verarbeite Jahr {jahr} …")
+            print(f"🔄 Verarbeite Jahr {jahr} …")
             self.driver.get(BASE_URL)
             time.sleep(2)
 
@@ -86,21 +121,40 @@ class LottoScraper:
                 optionen = tag_select.options
 
                 for i in range(len(optionen)):
-                    try:
-                        tag_select = Select(self.driver.find_element(By.CSS_SELECTOR, "select[id^='daySelect-select']"))
-                        option = tag_select.options[i]
-                        tag_value = option.get_attribute("value")
-                        datum = option.text.strip()
+                    tag_select = Select(self.driver.find_element(By.CSS_SELECTOR, "select[id^='daySelect-select']"))
+                    option = tag_select.options[i]
+                    tag_value = option.get_attribute("value")
+                    datum = option.text.strip()
 
+                    try:
                         self.lade_jahr_und_tag(jahr, tag_value)
                         eintrag = self.extrahiere_daten(jahr, datum)
-                        daten.append(eintrag)
 
-                    except Exception as e:
-                        print(f" Fehler bei Ziehung {i} in Jahr {jahr}: {e}")
+                        if all([eintrag["zahl_1"], eintrag["zahl_2"], eintrag["zahl_3"]]):
+                            daten.append(eintrag)
+                        else:
+                            raise ValueError("Unvollständige Zahlen")
+
+                    except Exception as e1:
+                        print(f"⚠️ Fehler bei Ziehung {i} in Jahr {jahr}, erster Versuch: {e1}")
+                        time.sleep(2)
+                        try:
+                            self.lade_jahr_und_tag(jahr, tag_value)
+                            eintrag = self.extrahiere_daten(jahr, datum)
+                            if all([eintrag["zahl_1"], eintrag["zahl_2"], eintrag["zahl_3"]]):
+                                daten.append(eintrag)
+                            else:
+                                raise ValueError("Unvollständige Zahlen beim zweiten Versuch")
+                        except Exception as e2:
+                            print(f"❌ Fehler bei Ziehung {i} in Jahr {jahr} auch im zweiten Versuch: {e2}")
+                            self.fehlerhafte_ziehungen.append({
+                                "jahr": jahr,
+                                "datum": datum,
+                                "grund": str(e2)
+                            })
 
             except Exception as e:
-                print(f" Fehler beim Laden der Tage in Jahr {jahr}: {e}")
+                print(f"❌ Fehler beim Laden der Tage in Jahr {jahr}: {e}")
 
         return daten
 
@@ -116,12 +170,17 @@ class LottoScraper:
         df.to_excel(path, index=False)
         print(f"✅ Excel-Datei gespeichert: {path}")
 
+        if self.fehlerhafte_ziehungen:
+            fehler_path = os.path.join(DATA_PATH, f"fehlerhafte_ziehungen_{timestamp}.json")
+            pd.DataFrame(self.fehlerhafte_ziehungen).to_json(fehler_path, orient="records", indent=2)
+            print(f"⚠️ Fehlerhafte Ziehungen gespeichert unter: {fehler_path}")
+
     def beenden(self):
         self.driver.quit()
 
 # === Hauptausführung ===
 if __name__ == "__main__":
     scraper = LottoScraper()
-    daten = scraper.extrahiere_alle_daten(start=1955, ende=1956)  # Testlauf für 2 Jahre
+    daten = scraper.extrahiere_alle_daten(start=1955, ende=1956)  # Beispiel-Range
     scraper.exportiere_excel(daten)
     scraper.beenden()
