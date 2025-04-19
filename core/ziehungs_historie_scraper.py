@@ -17,155 +17,184 @@ Abhängigkeiten:
 - openpyxl
 
 Nutzung:
->>> python core/ziehungs_historie_scraper.py
 
-Output-Verzeichnisse:
-- data/ziehungen_historie/ziehungen_YYYY.json
-- data/ziehungen_historie/alle_ziehungen.csv
-- data/ziehungen_historie/alle_ziehungen.xlsx
+>>> PS C:\Extracta> .\venv\Scripts\activate
+>>> (venv) PS C:\Extracta> python core/ziehungs_historie_scraper.py
+>>> python core/ziehungs_historie_scraper.py
 """
 
 import os
-import json
 import time
+import json
 import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.service import Service as ChromeService
-from selenium.webdriver.chrome.options import Options
 
-# Datenmodell der Ziehung
-class LottoZiehung:
-    def __init__(self, datum, jahr, zahlen, superzahl):
-        self.datum = datum
-        self.jahr = jahr
-        self.zahlen = zahlen
-        self.superzahl = superzahl
-
-    def to_dict(self):
-        return {
-            "datum": self.datum,
-            "jahr": self.jahr,
-            "zahlen": self.zahlen,
-            "superzahl": self.superzahl
-        }
+# Zielseite, von der gescrapt wird
+BASE_URL = "https://www.lotto.de/lotto-6aus49/lottozahlen"
+DATA_PATH = os.path.join("data", "ziehungen_historie")
+os.makedirs(DATA_PATH, exist_ok=True)
 
 class LottoScraper:
     def __init__(self):
+        """
+        Initialisiert den Chrome WebDriver im Headless-Modus (unsichtbarer Browser).
+        """
         chrome_options = Options()
         chrome_options.add_argument("--headless=new")
-        self.driver = webdriver.Chrome(service=ChromeService(), options=chrome_options)
-        self.wait = WebDriverWait(self.driver, 10)
-        self.base_url = "https://www.lotto.de/lotto-6aus49/lottozahlen"
-        self.output_dir = os.path.join("data", "ziehungen_historie")
-        os.makedirs(self.output_dir, exist_ok=True)
+        self.driver = webdriver.Chrome(service=Service("tools/chromedriver.exe"), options=chrome_options)
 
-    # Steuert die Auswahl eines Jahres im Dropdown-Menü
-    def waehle_jahr(self, jahr):
-        self.driver.get(self.base_url)
-        self.wait.until(EC.presence_of_element_located((By.TAG_NAME, "select")))
-        selects = self.driver.find_elements(By.TAG_NAME, "select")
-        for select in selects:
-            options = select.find_elements(By.TAG_NAME, "option")
-            for option in options:
-                if option.text.strip() == str(jahr):
-                    self.driver.execute_script(
-                        "arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('change'));",
-                        select, option.get_attribute("value")
-                    )
-                    time.sleep(2)
-                    return
-
-    # Wechselt auf eine bestimmte Ziehungsdatumsauswahl
-    def lade_tag(self, value):
-        selects = self.driver.find_elements(By.TAG_NAME, "select")
-        for select in selects:
-            if "Datum" in select.get_attribute("aria-label"):
-                self.driver.execute_script(
-                    "arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('change'));",
-                    select, value
-                )
-                time.sleep(2)
-                return
-
-    # Extrahiert eine einzelne Ziehung mit Datum, Zahlen & Superzahl
-    def extrahiere_ziehung(self, jahr, tag_option):
-        try:
-            datum = tag_option.text.strip()
-            value = tag_option.get_attribute("value")
-            self.lade_tag(value)
-
-            self.wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".DrawNumbersCollection")))
-
-            ziehungs_container = self.driver.find_elements(By.CSS_SELECTOR, ".DrawNumbersCollection__container")
-            zahlen_spans = ziehungs_container[0].find_elements(By.CSS_SELECTOR, ".LottoBall__circle")
-            zahlen = [int(z.get_attribute("aria-label")) for z in zahlen_spans[:6]]
-
-            superzahl_spans = ziehungs_container[1].find_elements(By.CSS_SELECTOR, ".LottoBall__circle")
-            superzahl = int(superzahl_spans[0].get_attribute("aria-label")) if superzahl_spans else None
-
-            return LottoZiehung(datum, jahr, zahlen, superzahl).to_dict()
-        except Exception as e:
-            print(f"⚠️ Fehler bei Ziehung {jahr} {tag_option.text.strip()}: {e}")
-            return None
-
-    # Hauptlogik zur Extraktion aller Ziehungen eines Jahres
-    def extrahiere_pro_jahr(self, jahr):
-        self.waehle_jahr(jahr)
+    def lade_jahr_und_tag(self, jahr, tag_value):
+        """
+        Öffnet die Website und wählt ein bestimmtes Jahr und einen Ziehungstag aus.
+        Dies wird über JavaScript ausgelöst (wie ein echter Klick).
+        """
+        self.driver.get(BASE_URL)
         time.sleep(2)
 
-        ziehungen = []
-        selects = self.driver.find_elements(By.TAG_NAME, "select")
-        for select in selects:
-            if "Datum" in select.get_attribute("aria-label"):
-                optionen = select.find_elements(By.TAG_NAME, "option")
-                for option in optionen:
-                    ziehung = self.extrahiere_ziehung(jahr, option)
-                    if ziehung:
-                        ziehungen.append(ziehung)
+        jahr_select = self.driver.find_element(By.CSS_SELECTOR, "select[id^='selectedYear-select']")
+        self.driver.execute_script(
+            "arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('change'));",
+            jahr_select, str(jahr)
+        )
+        time.sleep(2)
+
+        tag_select = self.driver.find_element(By.CSS_SELECTOR, "select[id^='daySelect-select']")
+        self.driver.execute_script(
+            "arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('change'));",
+            tag_select, tag_value
+        )
+        time.sleep(2)
+
+    def extrahiere_daten(self, jahr, datum):
+        """
+        Wartet auf die Lottozahlen (6 Kugeln) und Superzahl.
+        Gibt ein Dictionary mit Datum, Jahr, Zahlen und Superzahl zurück.
+        """
+        try:
+            # ⏳ Warten bis 6 Kugeln im DOM erscheinen
+            WebDriverWait(self.driver, 10).until(
+                lambda d: len(
+                    d.find_elements(By.CSS_SELECTOR, ".DrawNumbersCollection__container")[0]
+                    .find_elements(By.CLASS_NAME, "LottoBall")
+                ) >= 6
+            )
+
+            # 🔢 Lottozahlen extrahieren
+            zahlen_container = self.driver.find_elements(By.CSS_SELECTOR, ".DrawNumbersCollection__container")[0]
+            zahlen_elems = zahlen_container.find_elements(By.CLASS_NAME, "LottoBall")
+            zahlen = [int(el.text.strip()) for el in zahlen_elems]
+
+        except Exception as e:
+            print(f"⚠️ Lottozahlen fehlen für {datum} ({jahr}): {e}")
+            zahlen = []
+
+        try:
+            # ⏳ Superzahl warten und extrahieren
+            WebDriverWait(self.driver, 5).until(
+                lambda d: d.find_elements(By.CSS_SELECTOR, ".DrawNumbersCollection__container")[1]
+                .find_element(By.CLASS_NAME, "LottoBall")
+            )
+
+            super_container = self.driver.find_elements(By.CSS_SELECTOR, ".DrawNumbersCollection__container")[1]
+            super_elem = super_container.find_element(By.CLASS_NAME, "LottoBall")
+            superzahl = int(super_elem.text.strip())
+
+        except Exception as e:
+            print(f"⚠️ Superzahl fehlt für {datum} ({jahr}): {e}")
+            superzahl = None
+
+        return {
+            "datum": datum,
+            "jahr": jahr,
+            "zahlen": zahlen,
+            "superzahl": superzahl
+        }
+
+    def extrahiere_pro_jahr(self, jahr):
+        """
+        Für ein bestimmtes Jahr:
+        1. Lade alle Datum-Optionen
+        2. Iteriere durch alle Ziehungen
+        3. Extrahiere und speichere die Daten in einer JSON-Datei
+        """
+        print(f"🔄 Jahr {jahr} wird verarbeitet …")
+        self.driver.get(BASE_URL)
+        time.sleep(2)
+
+        jahr_select = self.driver.find_element(By.CSS_SELECTOR, "select[id^='selectedYear-select']")
+        self.driver.execute_script(
+            "arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('change'));",
+            jahr_select, str(jahr)
+        )
+        time.sleep(2)
+
+        # Warte und hole die Optionen für alle Ziehungstage
+        for _ in range(10):
+            try:
+                tag_select = self.driver.find_element(By.CSS_SELECTOR, "select[id^='daySelect-select']")
+                optionen = tag_select.find_elements(By.TAG_NAME, "option")
                 break
+            except Exception:
+                time.sleep(1)
+        else:
+            print(f"❌ Konnte Tage für Jahr {jahr} nicht laden.")
+            return []
+
+        # Wichtig: jedes Mal neu selektieren, da Seite neu rendert
+        anzahl_optionen = len(optionen)
+        ziehungen = []
+
+        for i in range(anzahl_optionen):
+            try:
+                # Dropdown neu holen, da es sich nach jeder Interaktion aktualisiert
+                tag_select = self.driver.find_element(By.CSS_SELECTOR, "select[id^='daySelect-select']")
+                option = tag_select.find_elements(By.TAG_NAME, "option")[i]
+
+                tag_value = option.get_attribute("value")
+                datum = option.text.strip()
+
+                self.lade_jahr_und_tag(jahr, tag_value)
+                daten = self.extrahiere_daten(jahr, datum)
+                ziehungen.append(daten)
+
+            except Exception as e:
+                print(f"⚠️ Fehler bei Ziehung: Index {i}, Jahr {jahr} – {e}")
+
+        # Speichern als JSON
+        with open(os.path.join(DATA_PATH, f"ziehungen_{jahr}.json"), "w", encoding="utf-8") as f:
+            json.dump(ziehungen, f, ensure_ascii=False, indent=2)
 
         return ziehungen
 
-    # Speichert Ziehungen eines Jahres als JSON
-    def speichere_json(self, jahr, ziehungen):
-        pfad = os.path.join(self.output_dir, f"ziehungen_{jahr}.json")
-        with open(pfad, "w", encoding="utf-8") as f:
-            json.dump(ziehungen, f, indent=2, ensure_ascii=False)
-        print(f" Gespeichert: {pfad}")
-
-    # Exportiert alles als CSV & Excel
-    def exportiere_gesamt(self):
-        alle = []
-        for fname in os.listdir(self.output_dir):
-            if fname.endswith(".json") and fname.startswith("ziehungen_"):
-                with open(os.path.join(self.output_dir, fname), "r", encoding="utf-8") as f:
-                    alle.extend(json.load(f))
-
-        if not alle:
-            print(" Keine Daten für Export gefunden.")
-            return
-
-        df = pd.DataFrame(alle)
-        df.to_csv(os.path.join(self.output_dir, "alle_ziehungen.csv"), index=False)
-        df.to_excel(os.path.join(self.output_dir, "alle_ziehungen.xlsx"), index=False)
-        print("📄 Export abgeschlossen (CSV + Excel)")
-
-    # Steuerung des gesamten Ablaufs über Jahre hinweg
-    def scrape(self, start_jahr=1955, end_jahr=2025):
-        for jahr in range(start_jahr, end_jahr + 1):
-            print(f"Jahr {jahr} wird bearbeitet...")
+    def scrape(self, start=1955, ende=2025):
+        """
+        Hauptfunktion für den Vollscan: Alle Ziehungen aller Jahre scrapen.
+        - Pro Jahr als JSON speichern
+        - Gesamtausgabe als CSV + Excel
+        """
+        alle_ziehungen = []
+        for jahr in range(start, ende + 1):
             ziehungen = self.extrahiere_pro_jahr(jahr)
-            self.speichere_json(jahr, ziehungen)
-        self.exportiere_gesamt()
+            alle_ziehungen.extend(ziehungen)
+
+        df = pd.DataFrame(alle_ziehungen)
+        df.to_csv(os.path.join(DATA_PATH, "alle_ziehungen.csv"), index=False)
+        df.to_excel(os.path.join(DATA_PATH, "alle_ziehungen.xlsx"), index=False)
+
+        print(f"✅ Export abgeschlossen: {len(alle_ziehungen)} Ziehungen gespeichert.")
 
     def beenden(self):
+        """Beendet die Browser-Sitzung korrekt."""
         self.driver.quit()
 
-# Startpunkt des Programms
+
+# ========== Haupteinstiegspunkt für CLI-Start ==========
 if __name__ == "__main__":
     scraper = LottoScraper()
-    scraper.scrape(1955, 2025)
+    scraper.scrape(start=1955, ende=1956)  # Testjahr, z. B. 1969 → ganze Serie 1955–2025
     scraper.beenden()
