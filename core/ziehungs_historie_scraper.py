@@ -76,7 +76,7 @@ class LottoScraper:
         Gibt ein Dictionary mit Datum, Jahr, Zahlen und Superzahl zurück.
         """
         try:
-            # ⏳ Warten bis 6 Kugeln im DOM erscheinen
+            #  Warten bis 6 Kugeln im DOM erscheinen
             WebDriverWait(self.driver, 10).until(
                 lambda d: len(
                     d.find_elements(By.CSS_SELECTOR, ".DrawNumbersCollection__container")[0]
@@ -84,17 +84,17 @@ class LottoScraper:
                 ) >= 6
             )
 
-            # 🔢 Lottozahlen extrahieren
+            # Lottozahlen extrahieren
             zahlen_container = self.driver.find_elements(By.CSS_SELECTOR, ".DrawNumbersCollection__container")[0]
             zahlen_elems = zahlen_container.find_elements(By.CLASS_NAME, "LottoBall")
             zahlen = [int(el.text.strip()) for el in zahlen_elems]
 
         except Exception as e:
-            print(f"⚠️ Lottozahlen fehlen für {datum} ({jahr}): {e}")
+            print(f" Lottozahlen fehlen für {datum} ({jahr}): {e}")
             zahlen = []
 
         try:
-            # ⏳ Superzahl warten und extrahieren
+            #  Superzahl warten und extrahieren
             WebDriverWait(self.driver, 5).until(
                 lambda d: d.find_elements(By.CSS_SELECTOR, ".DrawNumbersCollection__container")[1]
                 .find_element(By.CLASS_NAME, "LottoBall")
@@ -105,7 +105,7 @@ class LottoScraper:
             superzahl = int(super_elem.text.strip())
 
         except Exception as e:
-            print(f"⚠️ Superzahl fehlt für {datum} ({jahr}): {e}")
+            print(f" Superzahl fehlt für {datum} ({jahr}): {e}")
             superzahl = None
 
         return {
@@ -122,7 +122,7 @@ class LottoScraper:
         2. Iteriere durch alle Ziehungen
         3. Extrahiere und speichere die Daten in einer JSON-Datei
         """
-        print(f"🔄 Jahr {jahr} wird verarbeitet …")
+        print(f" Jahr {jahr} wird verarbeitet …")
         self.driver.get(BASE_URL)
         time.sleep(2)
 
@@ -142,7 +142,7 @@ class LottoScraper:
             except Exception:
                 time.sleep(1)
         else:
-            print(f"❌ Konnte Tage für Jahr {jahr} nicht laden.")
+            print(f"Konnte Tage für Jahr {jahr} nicht laden.")
             return []
 
         # Wichtig: jedes Mal neu selektieren, da Seite neu rendert
@@ -163,7 +163,7 @@ class LottoScraper:
                 ziehungen.append(daten)
 
             except Exception as e:
-                print(f"⚠️ Fehler bei Ziehung: Index {i}, Jahr {jahr} – {e}")
+                print(f" Fehler bei Ziehung: Index {i}, Jahr {jahr} – {e}")
 
         # Speichern als JSON
         with open(os.path.join(DATA_PATH, f"ziehungen_{jahr}.json"), "w", encoding="utf-8") as f:
