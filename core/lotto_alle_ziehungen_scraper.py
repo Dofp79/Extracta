@@ -28,7 +28,7 @@ Abhängigkeiten:
 - openpyxl
 
 Verwendung:
->>> (venv) PS C:\Extracta> python core/lotto_alle_ziehungen_scraper.py
+>>> (venv) PS E:\Extracta> python core/lotto_alle_ziehungen_scraper.py
 """
 
 
@@ -48,6 +48,7 @@ DATA_PATH = "data"
 os.makedirs(DATA_PATH, exist_ok=True)
 
 class LottoScraper:
+    # Initialisiert den Selenium WebDriver (Chrome, Headless) und erstellt eine Fehlerliste.
     def __init__(self):
         chrome_options = Options()
         chrome_options.add_argument("--headless=new")
@@ -57,6 +58,7 @@ class LottoScraper:
         self.driver = webdriver.Chrome(service=Service("tools/chromedriver.exe"), options=chrome_options)
         self.fehlerhafte_ziehungen = []
 
+    # Wählt ein bestimmtes Jahr und Ziehungstag im Dropdown aus und wartet auf neue Ziehungsdaten.
     def lade_jahr_und_tag(self, jahr, tag_value):
         self.driver.get(BASE_URL)
         time.sleep(2)
@@ -74,6 +76,7 @@ class LottoScraper:
         except:
             alte_zahl = ""
 
+        # Wird verwendet, um einen DOM-Wechsel zu erkennen, also: Ist die neu geladene Zahl im DOM anders als die alte?
         def neue_zahl_geladen(driver):
             try:
                 neue_zahl = driver.find_elements(By.CSS_SELECTOR, ".DrawNumbersCollection__container")[0]\
@@ -85,6 +88,7 @@ class LottoScraper:
         WebDriverWait(self.driver, 10).until(neue_zahl_geladen)
         time.sleep(0.5)
 
+    # Extrahiert die 6 Lottozahlen und die Superzahl von der aktuellen Seite.
     def extrahiere_daten(self, jahr, datum):
         try:
             container = self.driver.find_elements(By.CSS_SELECTOR, ".DrawNumbersCollection__container")
@@ -104,32 +108,42 @@ class LottoScraper:
             "zahl_6": zahlen[5] if len(zahlen) > 5 else None,
             "superzahl": superzahl
         }
-
+    """
+    Diese Methode ist das Haupt-Scraping-Verfahren,  Iteriert über alle Jahre und Ziehungen, extrahiert die Daten, implementiert Retry-Logik:
+    - durch alle Jahre iteriert (1955–2025)
+    - für jedes Jahr alle Ziehungsdaten-Tage auswählt
+    - die Lottozahlen und Superzahl extrahiert
+    - die Daten speichert (oder Fehler dokumentiert)
+    """
     def extrahiere_alle_daten(self, start=1955, ende=2025):
-        daten = []
+        daten = [] # Initialisierung der Ergebnisliste
         for jahr in range(start, ende + 1):
             print(f"🔄 Verarbeite Jahr {jahr} …")
             self.driver.get(BASE_URL)
             time.sleep(2)
 
+            # Öffnet die Lotto-Seite und wählt das aktuelle Jahr im Dropdown-Menü
             jahr_select = Select(self.driver.find_element(By.CSS_SELECTOR, "select[id^='selectedYear-select']"))
             jahr_select.select_by_value(str(jahr))
             time.sleep(2)
 
             try:
                 tag_select = Select(self.driver.find_element(By.CSS_SELECTOR, "select[id^='daySelect-select']"))
-                optionen = tag_select.options
+                optionen = tag_select.options # Liest alle verfügbaren Ziehungsdaten im aktuellen Jahr.
 
-                for i in range(len(optionen)):
+                for i in range(len(optionen)): #Iteriert durch jeden Ziehungstag im Jahr.
                     tag_select = Select(self.driver.find_element(By.CSS_SELECTOR, "select[id^='daySelect-select']"))
+                    # Ermittelt den internen Wert für die Dropdown-Auswahl (value) und das sichtbare Datum (z. B. „21.06. (Mittwoch)”).
                     option = tag_select.options[i]
                     tag_value = option.get_attribute("value")
                     datum = option.text.strip()
 
                     try:
+                        # Wählt das Datum und ruft die Lottozahlen ab.
                         self.lade_jahr_und_tag(jahr, tag_value)
                         eintrag = self.extrahiere_daten(jahr, datum)
 
+                        # Wenn mindestens 3 Zahlen vorhanden, wird die Ziehung als gültig gespeichert.
                         if all([eintrag["zahl_1"], eintrag["zahl_2"], eintrag["zahl_3"]]):
                             daten.append(eintrag)
                         else:
@@ -138,6 +152,7 @@ class LottoScraper:
                     except Exception as e1:
                         print(f"⚠️ Fehler bei Ziehung {i} in Jahr {jahr}, erster Versuch: {e1}")
                         time.sleep(2)
+                        # Zweiter Versuch, dann wird der Fehler samt Jahr und Datum dokumentiert.
                         try:
                             self.lade_jahr_und_tag(jahr, tag_value)
                             eintrag = self.extrahiere_daten(jahr, datum)
@@ -158,6 +173,7 @@ class LottoScraper:
 
         return daten
 
+    # Exportiert alle extrahierten Daten sortiert nach Datum als Excel-Datei & speichert Fehler als JSON.
     def exportiere_excel(self, daten):
         df = pd.DataFrame(daten)
         df["sort_datum"] = df["datum"].str.extract(r"(\d{2}\.\d{2})").iloc[:, 0] + "." + df["jahr"].astype(str)
@@ -175,6 +191,7 @@ class LottoScraper:
             pd.DataFrame(self.fehlerhafte_ziehungen).to_json(fehler_path, orient="records", indent=2)
             print(f"⚠️ Fehlerhafte Ziehungen gespeichert unter: {fehler_path}")
 
+    # Beendet die Selenium WebDriver-Sitzung.
     def beenden(self):
         self.driver.quit()
 
