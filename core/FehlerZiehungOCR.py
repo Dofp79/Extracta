@@ -3,7 +3,7 @@ import re
 import json
 from datetime import datetime
 
-# (venv) E:\Extracta>E:\Extracta\venv\Scripts\python.exe core/FehlerZiehungOCR.py
+# (venv) C:\Extracta>C:\Extracta\venv\Scripts\python.exe core/FehlerZiehungOCR.py
 class FehlerZiehungOCR:
     def __init__(self, verzeichnis="data"):
         self.verzeichnis = verzeichnis
