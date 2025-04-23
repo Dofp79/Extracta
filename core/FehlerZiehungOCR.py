@@ -1,17 +1,43 @@
+'''
+Modulname: FehlerZiehungOCR.py
+Pfad:     core/FehlerZiehungOCR.py
+Autor:    Cody | GPT-gestütztes Lotto-Analyse-Tool
+Zweck:    Lädt die zuletzt generierte JSON-Datei mit fehlerhaften Ziehungen für spätere OCR-Verarbeitung.
+
+Beschreibung:
+Dieses Skript dient zur Analyse und Vorbereitung fehlerhafter Ziehungsdaten. Es durchsucht das `data`-Verzeichnis
+nach der neuesten Datei im Format `fehlerhafte_ziehungen_*.json` und lädt deren Inhalt. Diese Daten können
+später für Screenshot-Erstellung oder OCR-Extraktion weiterverwendet werden.
+
+Funktionen:
+- Sucht automatisch die neueste Datei mit fehlerhaften Ziehungen
+- Lädt den Inhalt als Liste von Dictionaries
+- Bietet Vorschau der Datenstruktur für spätere Weiterverarbeitung
+
+Abhängigkeiten:
+- re
+- os
+- json
+- datetime
+
+Verwendung:
+>>> (venv) C:\Extracta> C:\Extracta\venv\Scripts\python.exe core/FehlerZiehungOCR.py
+'''
+
 import os
 import re
 import json
 from datetime import datetime
 
-# (venv) C:\Extracta>C:\Extracta\venv\Scripts\python.exe core/FehlerZiehungOCR.py
 class FehlerZiehungOCR:
     def __init__(self, verzeichnis="data"):
+         # Initialisiert mit Zielverzeichnis und sucht die neueste Fehlerdatei
         self.verzeichnis = verzeichnis
         self.fehlerdatei_path = self.finde_neueste_fehlerdatei()
         self.ziehungen = []
 
     def finde_neueste_fehlerdatei(self):
-        """Sucht die neueste 'fehlerhafte_ziehungen_*.json'-Datei im data/-Verzeichnis."""
+        # Sucht die neueste 'fehlerhafte_ziehungen_*.json'-Datei im data/-Verzeichnis.
         pattern = re.compile(r"fehlerhafte_ziehungen_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.json")
         try:
             fehlerdateien = [
