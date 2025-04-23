@@ -1,7 +1,6 @@
 '''
 Modulname: FehlerZiehungOCR.py
 Pfad:     core/FehlerZiehungOCR.py
-Autor:    Cody | GPT-gestütztes Lotto-Analyse-Tool
 Zweck:    Lädt die zuletzt generierte JSON-Datei mit fehlerhaften Ziehungen für spätere OCR-Verarbeitung.
 
 Beschreibung:
