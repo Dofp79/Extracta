@@ -1,3 +1,32 @@
+"""
+Modulname: FehlerZiehungOCR_Screenshots.py
+Pfad:     core/FehlerZiehungOCR_Screenshots.py
+Zweck:    Erneuter Screenshot-Versuch fehlgeschlagener Lottoziehungen (aus .json-Datei)
+Website:  https://www.lotto.de/lotto-6aus49/lottozahlen
+
+Beschreibung:
+Dieses Skript lädt die zuletzt gespeicherte Datei mit fehlerhaften Ziehungen und
+führt eine erneute Navigation zur Lotto-Website durch, um Screenshots der entsprechenden Ziehungen zu speichern.
+Dies ist nützlich für die spätere manuelle Kontrolle oder Texterkennung (OCR).
+
+Funktionen:
+- Sucht nach der neuesten JSON-Datei mit fehlerhaften Ziehungen
+- Initialisiert einen sichtbaren Chrome-Browser für Debugging-Zwecke
+- Navigiert zur richtigen Ziehung über Jahr und Datumsauswahl
+- Erstellt Screenshots der Ziehungsseite
+- Speichert Metadaten zu den erstellten Screenshots als JSON
+
+Abhängigkeiten:
+- Selenium
+- JSON
+- datetime
+- OS
+
+Verwendung:
+>>> (venv) PS C:\Extracta> python core/FehlerZiehungOCR_Screenshots.py
+"""
+
+
 import os
 import json
 import time
