@@ -16,7 +16,8 @@ aber ich arbeite kontinuierlich daran und an weiteren Projekten.
 🐍 Python  | ⚡ FastAPI  | 🧪 Pytest  | 📊 Pandas  | ☁️ REST APIs
 
 ---
-## 📫 Kontakt
+
+📫 Kontakt
 
 **Fragen oder Feedback?**  
 Doniman F. Peña Parra
