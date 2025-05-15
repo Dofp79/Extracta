@@ -9,7 +9,6 @@ Herzlich Willkommen bei dem Repository Extracta!
 **Dieses Repository befindet sich noch in der Entwicklung** –  
 aber ich arbeite kontinuierlich daran und an weiteren Projekten.  
 
----
 ________________________________________
 ## 📫 Kontakt
 
@@ -20,9 +19,11 @@ Fragen oder Feedback?
 - 🔗 [LinkedIn](https://www.linkedin.com/in/doniman-francisco-pe%C3%B1a-parra-609263232/)
 - ✉️ E-Mail: [dofp79@hotmail.com](mailto:dofp79@hotmail.com)
 
+________________________________________
 
 ## 💻 Tech Stack
 ```python
 🐍 Python  | ⚡ FastAPI  | 🧪 Pytest  | 📊 Pandas  | ☁️ REST APIs
 
----
+
+
