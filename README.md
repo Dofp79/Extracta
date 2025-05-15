@@ -17,10 +17,11 @@ aber ich arbeite kontinuierlich daran und an weiteren Projekten.
 
 ---
 
-📫 Kontakt
+________________________________________
+## 📫 Kontakt
 
-**Fragen oder Feedback?**  
-Doniman F. Peña Parra
+Fragen oder Feedback?  
+**Doniman F. Peña Parra**
 
 🌐 [GPT-Link zur Projektunterstützung](https://chatgpt.com/g/g-vlwmxompx-python-zauberer)  
 🔗 [LinkedIn – Doniman Francisco Peña Parra](https://www.linkedin.com/in/doniman-francisco-pe%C3%B1a-parra-609263232/)  
