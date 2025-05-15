@@ -12,6 +12,11 @@ Ein sicheres, strukturiertes und erweiterbares System zur Extraktion und lokalen
 ### Ursprünglicher Zweck
 Analyse von **Lottozahlen**, aber modular anpassbar für **jede HTML-basierte Datenquelle**.
 
+## 💻 Tech Stack
+```python
+🐍 Python  | ⚡ FastAPI  | 🧪 Pytest  | 📊 Pandas  | ☁️ REST APIs
+
+```
 ________________________________________
 ## 📫 Kontakt
 
@@ -24,9 +29,7 @@ Fragen oder Feedback?
 
 ________________________________________
 
-## 💻 Tech Stack
-```python
-🐍 Python  | ⚡ FastAPI  | 🧪 Pytest  | 📊 Pandas  | ☁️ REST APIs
+
 
 
 
