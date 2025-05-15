@@ -14,3 +14,13 @@ aber ich arbeite kontinuierlich daran und an weiteren Projekten.
 ## 💻 Tech Stack
 ```python
 🐍 Python  | ⚡ FastAPI  | 🧪 Pytest  | 📊 Pandas  | ☁️ REST APIs
+
+---
+## 📫 Kontakt
+
+**Fragen oder Feedback?**  
+Doniman F. Peña Parra
+
+🌐 [GPT-Link zur Projektunterstützung](https://chatgpt.com/g/g-vlwmxompx-python-zauberer)  
+🔗 [LinkedIn – Doniman Francisco Peña Parra](https://www.linkedin.com/in/doniman-francisco-pe%C3%B1a-parra-609263232/)  
+✉️ **E-Mail**: [dofp79@hotmail.com](mailto:dofp79@hotmail.com)
