@@ -1,7 +1,7 @@
 ## Herzlich Willkommen bei dem Repository Extracta!
 
 ---
-## Projekt-Zusammenfassung
+### Projekt-Zusammenfassung
 „Extrata“ ist ein Werkzeug zur lokalen Datensammlung ohne kommerzielle APIs. Es wurde ursprünglich für die Auswertung von Lottozahlen entwickelt, kann aber an beliebige HTML-basierte Informationsquellen angepasst werden. Ziel ist die sichere, strukturierte und erweiterbare lokale Bereitstellung von Daten.
 
 ---
