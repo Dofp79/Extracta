@@ -1,4 +1,4 @@
-Herzlich Willkommen bei dem Repository Extracta!
+## Herzlich Willkommen bei dem Repository Extracta!
 
 ---
 ## Projekt-Zusammenfassung
