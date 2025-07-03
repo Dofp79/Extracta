@@ -13,7 +13,7 @@ Funktionen:
 
 Abhängigkeiten:
 - Selenium
-- pandas
+- pandas 
 - openpyxl
 
 Nutzung:
