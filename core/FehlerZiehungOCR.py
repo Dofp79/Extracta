@@ -5,7 +5,7 @@ Zweck:    Lädt die zuletzt generierte JSON-Datei mit fehlerhaften Ziehungen fü
 
 Beschreibung:
 Dieses Skript dient zur Analyse und Vorbereitung fehlerhafter Ziehungsdaten. Es durchsucht das `data`-Verzeichnis
-nach der neuesten Datei im Format `fehlerhafte_ziehungen_*.json` und lädt deren Inhalt. Diese Daten können
+nach der neuesten Datei im Format `fehlerhafte_ziehungen_*.json` und lädt deren Inhalt. Diese Daten können 
 später für Screenshot-Erstellung oder OCR-Extraktion weiterverwendet werden.
 
 Funktionen:
