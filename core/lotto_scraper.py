@@ -10,7 +10,7 @@ Ziel:
 import sys
 import os
 
-# 🔧 Fügt den Projekt-Hauptordner "Extracta/" zum Suchpfad hinzu
+#  Fügt den Projekt-Hauptordner "Extracta/" zum Suchpfad hinzu
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
@@ -80,10 +80,10 @@ if __name__ == "__main__":
 
     # DEBUG: HTML anzeigen (die ersten 1000 Zeichen)
     soup = BeautifulSoup(html, "html.parser")
-    print("\n🧪 HTML-Vorschau:")
+    print("\n HTML-Vorschau:")
     print(soup.prettify()[:1000])  # optional: auf 2000 erhöhen, wenn nötig
 
     # Dann Ziehung normal parsen und anzeigen
     ziehung = parse_lottoziehung(html)
-    print("\n📦 Parsed Ziehung:")
+    print("\n Parsed Ziehung:")
     print(ziehung.to_dict())
